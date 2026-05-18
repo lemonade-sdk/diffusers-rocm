@@ -331,6 +331,16 @@ jobs:
         name: diffusers-ubuntu-rocm-${{ matrix.gfx_target }}-x64
         path: ./artifact
 
+    - name: Restore executable bits (upload-artifact@v4 strips them)
+      run: |
+        # GitHub Actions' upload/download-artifact v4 does not preserve
+        # Unix mode bits. Mark every file in any bin/ directory executable
+        # so python3.12, our launcher shim, pip-installed entry-point
+        # scripts, and the bundled clang all work after extraction.
+        find ./artifact -type d -name bin | while read bindir; do
+          find "$bindir" -maxdepth 1 -type f -exec chmod +x {} +
+        done
+
     - name: Generate release tag
       id: generate-tag
       run: |
